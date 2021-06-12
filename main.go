@@ -1,19 +1,49 @@
 package main
 
 import (
-	"fmt"
-	"github.com/litondev/gin-gionic-mangament-library/configs"
-	"github.com/litondev/gin-gionic-mangament-library/models"
+	"github.com/gin-gonic/gin"
+	"github.com/litondev/gin-gionic-mangament-library/routers"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
+	"github.com/utrack/gin-csrf"
+	// "os"	
+	// "fmt"
+	// "reflect"
+	// "github.com/litondev/gin-gionic-mangament-library/migrations"
+	// "github.com/litondev/gin-gionic-mangament-library/seeders"
 )
 
 func main(){
-	DB := configs.Connection()
+	// if len(os.Args) == 2 {
+	// 	if os.Args[1] == "--migrate" {
+	// 		migrations.RunMigration()
+	// 	}
 
-	fmt.Println(DB.Migrator().CurrentDatabase())
+	// 	if os.Args[1] == "--seed" {
+	// 		seeders.RunSeed()
+	// 	}
 
-	fmt.Println("Hello World")
+	// 	return
+	// }
 
-	DB.Migrator().DropTable(&models.User{})
 
-	DB.AutoMigrate(&models.User{})
+	router := gin.Default()
+	
+	router.Static("/assets", "./assets")
+
+	router.Use(sessions.Sessions("mycsrf", cookie.NewStore([]byte("secret"))))
+
+	router.Use(csrf.Middleware(csrf.Options{
+		Secret: "SECRET123",
+		ErrorFunc: func(ctx *gin.Context) {
+			ctx.String(419, "CSRF token mismatch")
+			ctx.Abort()
+		},
+	}))
+
+	// fmt.Println(reflect.ValueOf(router).Type())
+
+	routers.Web(router)
+
+ 	router.Run()
 }
